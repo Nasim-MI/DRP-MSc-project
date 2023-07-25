@@ -350,6 +350,34 @@ def train_model_SMILES_cv(model,lr_scheduler,train_pairs,x_all,x_drug,y_series,e
 
 
 
+def train_model_XGBr(model, x_train, x_test, y_train, y_test):
+
+    # unpackage x_train and x_test 
+    xo_train, xd_train = x_train
+    xo_test, xd_test = x_test
+
+    # concatenate one hot encoded drugs to phosphoproteomics dataframe for RF
+    X_train = pd.concat([xo_train, xd_train], axis=1)
+    X_test = pd.concat([xo_test, xd_test], axis=1)
+    # convert all column names from x_drug to str
+    X_train.columns = X_train.columns.map(str)
+    X_test.columns = X_test.columns.map(str)
+
+    # train
+    start = time.time() # start timer
+    
+    model.fit(X_train,y_train)
+    y_pred = model.predict(X_test)
+
+    end = time.time() # end timer
+    result = end - start
+    print('%.3f seconds' % result)
+
+    # compare prediction to test data to get r2 and mse scores
+    prediction_metrics(y_test, y_pred)
+
+
+
 def prediction_metrics(y_test, y_pred):
     """Takes y_pred predictions, y_test target values and calculates r2 and mse metrics to be printed by function"""
     print('r2  score: ', r2_score(y_test, y_pred))
