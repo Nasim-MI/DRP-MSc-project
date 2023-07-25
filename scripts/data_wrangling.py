@@ -305,3 +305,29 @@ def wrangle_single(drug_df,omics_df,replicate=1):
 
 
 
+def import_SMILES():
+    """Imports and wrangles drug names and SMILES strings for GDSC drugs in phosphoproteomics and proteomics datasets
+    """
+    # import and extract GDSC drug names
+    gdsc_drugs = pd.read_table('datasets/GDSC_drug.tsv')
+    gdsc_drugs = gdsc_drugs[~gdsc_drugs[' PubCHEM'].isna()] # remove any drugs without PubCHEM IDs
+    drug_name_id = gdsc_drugs.iloc[:,[1,5]].drop_duplicates()
+
+    # import GDSC drug SMILES strings
+    SMILES_df = pd.read_table('datasets/GDSC_SMILES_overlap.txt',header=None)
+    SMILES_df.columns = ['PubCHEM','SMILES'] # set col names
+    SMILES_df['PubCHEM'] = SMILES_df['PubCHEM'].astype('str') # set id type to str
+
+    # create dataframe containg drug names and SMILES strings for each GDSC drug in phos dataset with a SMILES string
+    drug_array_list = []
+    for array in drug_name_id.values:
+        drug_id = array[1] # take PubCHEM id
+        drug_SMILES = SMILES_df.loc[SMILES_df['PubCHEM'] == drug_id]['SMILES'] # find SMILES using PubCHEM id
+        array = np.append(array,drug_SMILES) # add SMILES to array
+        drug_array_list.append(array) # add array to list of arrays
+
+    drug_name_id_SMILES = pd.DataFrame(drug_array_list, columns = ['name','PubCHEM','SMILES'])
+    drug_name_SMILES = drug_name_id_SMILES.drop('PubCHEM', axis=1)
+    drug_name_SMILES = drug_name_SMILES[~drug_name_SMILES['SMILES'].isna()] 
+
+    return drug_name_SMILES
