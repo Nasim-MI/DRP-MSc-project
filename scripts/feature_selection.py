@@ -108,12 +108,12 @@ def fs_atlas_landmark(phos_df,cutoff=90):
     landmark_genes_df = pd.read_csv("datasets/landmark_genes_LINCS.txt",sep='\t')
     landmark_genes = landmark_genes_df['Symbol']
 
-    # load substrate specificity dataset
-    atlas_df = pd.read_csv('datasets/atlas_ptms.csv')
+    # load substrate specificity dataset filtered for substrate specificities of landmark genes only
+    atlas_LM_df = pd.read_csv('datasets/atlas_LM_ptms.csv')
     # remove empty columns
-    for col in atlas_df.columns:
+    for col in atlas_LM_df.columns:
         if 'Unnamed:' in col:
-            atlas_df.drop(col, axis=1, inplace=True)
+            atlas_LM_df.drop(col, axis=1, inplace=True)
 
     phos_df_genes = []
     for col in phos_df.columns:
@@ -137,62 +137,20 @@ def fs_atlas_landmark(phos_df,cutoff=90):
     # find which genes are in substrate specificity dataset  using uniprot id
     extra_ids = []
     for id in gene_id_dict:
-        if id in atlas_df['Database Uniprot Accession'].to_list():
+        if id in atlas_LM_df['Database Uniprot Accession'].to_list():
             extra_ids.append(id)
 
     # filter dataframe for rows using genes appearing either in 'Gene', 'Alternative Gene Names' 
     # or 'Protein' column of substrate specificity dataset
-    atlas_df_filtered_gene = atlas_df[(atlas_df['Gene'].isin(phos_df_genes)) | 
-                                                (atlas_df['Protein'].isin(phos_df_genes)) | 
-                                                (atlas_df['Alternative Gene Names'].isin(phos_df_genes))]
+    atlas_LM_filtered_gene = atlas_LM_df[(atlas_LM_df['Gene'].isin(phos_df_genes)) | 
+                                                (atlas_LM_df['Protein'].isin(phos_df_genes)) | 
+                                                (atlas_LM_df['Alternative Gene Names'].isin(phos_df_genes))]
     # filter dataframe for rows with additional genes using uniprot ids
-    atlas_df_filtered_id = atlas_df[atlas_df['Database Uniprot Accession'].isin(extra_ids)]
+    atlas_LM_filtered_id = atlas_LM_df[atlas_LM_df['Database Uniprot Accession'].isin(extra_ids)]
     # combine into single dataframe
-    atlas_df_filtered = pd.concat([atlas_df_filtered_gene, atlas_df_filtered_id], axis=0).reset_index()
+    atlas_LM_filtered = pd.concat([atlas_LM_filtered_gene, atlas_LM_filtered_id], axis=0).reset_index()
 
-    # create separate lists for enzyme columns and other columns
-    enzyme_colnames = []
-    other_colnames = []
-    for col in atlas_df_filtered.columns:
-        if 'rank' in col or 'percentile' in col and col != 'median_percentile':
-            enzyme_colnames.append(col)
-        else:
-            other_colnames.append(col)
-    # extract enzyme names from colnames and remove duplicates
-    enzyme_list = []
-    for col in enzyme_colnames:
-        enz = col.split('_')[0]
-        enzyme_list.append(enz)
-    enzyme_list = list(dict.fromkeys(enzyme_list))
-    # find enzymes which are also landmark genes
-    enzyme_list_lm = list(set(enzyme_list).intersection(landmark_genes.to_list()))
-    # find colnames with landmark gene enzymes
-    enzyme_colnames_LM = []
-    for col in enzyme_colnames:
-        for enz in enzyme_list_lm:
-            if enz in col:
-                enzyme_colnames_LM.append(col)
 
-    # combine lists
-    other_colnames.extend(enzyme_colnames_LM)
-    LM_colnames = other_colnames
-
-    # filter dataframe to get data for LM enzymes only
-    atlas_LM = atlas_df_filtered[LM_colnames]
-
-    # select for percentile columns except for median percentile column
-    percentile_vals = atlas_LM.filter(regex='percentile').iloc[: , 1:].values 
-    from statistics import median
-    # iterate through list of arrays, calculate new median and add to list
-    median_percentile_list = []
-    for percentiles in percentile_vals:
-        median_percentile_list.append(median(percentiles))
-    # iterate through list of arrays, calculate number of kinases scoring above 90th percentile and add to list
-    promiscuity_index_list = []
-    for percentiles in percentile_vals:
-        promiscuity_index_list.append((percentiles > 90).sum())
-    # replace median percentile and promiscuity index columns with new values
-    atlas_LM = atlas_LM.assign(median_percentile=pd.Series(median_percentile_list), promiscuity_index=pd.Series(promiscuity_index_list))
 
     # set cutoff percentile 0-100
     cutoff_perc = cutoff
@@ -203,19 +161,19 @@ def fs_atlas_landmark(phos_df,cutoff=90):
 
     if cutoff_type == 'prom_index': # using promiscuity index cutoff
         # calculate cutoff
-        ranking_prom_index = atlas_LM['promiscuity_index'].to_numpy()
+        ranking_prom_index = atlas_LM_filtered['promiscuity_index'].to_numpy()
         print('promiscuity index cutoff: ', np.percentile(ranking_prom_index, cutoff_perc))
         # filter dataframe
         cutoff = np.percentile(ranking_prom_index, cutoff_perc) # change number to cutoff percentile
-        atlas_LM_cutoff = atlas_LM[atlas_LM['promiscuity_index'] > cutoff]
+        atlas_LM_cutoff = atlas_LM_filtered[atlas_LM_filtered['promiscuity_index'] > cutoff]
 
     elif cutoff_type == 'median_perc': # using median percentile cutoff
         # calculate cutoff
-        ranking_median_perc = atlas_LM['median_percentile'].to_numpy()
+        ranking_median_perc = atlas_LM_filtered['median_percentile'].to_numpy()
         print('median percentile cutoff: ', np.percentile(ranking_median_perc, cutoff_perc))
         # filter dataframe
         cutoff = np.percentile(ranking_median_perc, cutoff_perc) # change number to cutoff percentile
-        atlas_LM_cutoff = atlas_LM[atlas_LM['median_percentile'] > cutoff] 
+        atlas_LM_cutoff = atlas_LM_filtered[atlas_LM_filtered['median_percentile'] > cutoff] 
 
     # create list of gene-phosphosite pairs within substrate specificity dataset filtered by median cutoff
     formatted_phosphosites = []
