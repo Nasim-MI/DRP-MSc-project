@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 import time
 from sklearn.metrics import r2_score, mean_squared_error
-from tensorflow.keras.callbacks import EarlyStopping
 from scripts.data_selection import cblind_split, data_indexing, crossval_pairs
 
 
@@ -14,18 +13,16 @@ def train_model(model, lr_scheduler, x_train, x_test, y_train, y_test, epochs):
     xo_train, xd_train = x_train
     xo_test, xd_test = x_test
 
-    # set early stopping and learning rate scheduler
-    es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=20, min_delta=0, restore_best_weights=True)
-    callbacks_list =  [es,lr_scheduler]
+    # set learning rate scheduler
+    callbacks_list =  [lr_scheduler]
 
     # train
     start = time.time() # start timer
     
     history = model.fit([xo_train, xd_train], y_train,
-                        validation_data=([xo_test, xd_test], y_test),
                         epochs=epochs, 
                         batch_size=None, 
-                        verbose=1, 
+                        verbose=1,
                         callbacks=callbacks_list)
     
     y_pred = model.predict([xo_test, xd_test])  
@@ -45,18 +42,16 @@ def train_model_multi(model, lr_scheduler, x_train, x_test, y_train, y_test, epo
     xo_train_phos, xo_train_prot, xd_train = x_train
     xo_test_phos, xo_test_prot, xd_test = x_test
 
-    # set early stopping and learning rate scheduler
-    es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=20, min_delta=0, restore_best_weights=True)
-    callbacks_list =  [es,lr_scheduler]
+    # set learning rate scheduler
+    callbacks_list =  [lr_scheduler]
 
     # train
     start = time.time() # start timer
     
     history = model.fit([xo_train_phos, xo_train_prot, xd_train], y_train,
-                        validation_data=([xo_test_phos, xo_test_prot, xd_test], y_test),
                         epochs=epochs, 
                         batch_size=None, 
-                        verbose=1, 
+                        verbose=1,
                         callbacks=callbacks_list)
 
     y_pred = model.predict([xo_test_phos, xo_test_prot, xd_test], verbose=1)   
@@ -99,10 +94,8 @@ def train_model_cv(model,lr_scheduler,train_pairs,x_all,x_drug,y_series,epochs,r
         # loop for each k-fold
         for i in range(k):
             print('K-fold', i+1)
-            # set early stopping and checkpoint parameters
-            es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=10, min_delta=0, restore_best_weights=True)
-            callbacks_list = [es, lr_scheduler]
-
+            # set learning rate scheduler
+            callbacks_list =  [lr_scheduler]
             # set training and eval pairs and split data for training
             train_pairs_2, eval_pairs = crossval_pairs(train_2_pairs_set,eval_pairs_set,i)
             xo_train, xd_train, y_train, xo_test, xd_test, y_test = data_indexing(train_pairs_2,eval_pairs,x_all,x_drug,y_series)
@@ -114,7 +107,7 @@ def train_model_cv(model,lr_scheduler,train_pairs,x_all,x_drug,y_series,epochs,r
                                 validation_data=([xo_test, xd_test], y_test),
                                 epochs=epochs, 
                                 batch_size=None, 
-                                verbose=0, 
+                                verbose=1,
                                 callbacks=callbacks_list)
             
             # End timer
@@ -175,9 +168,8 @@ def train_model_multi_cv(model,lr_scheduler,train_pairs,x_all,x_drug,y_series,ep
         # loop for each k-fold
         for i in range(k):
             print('K-fold', i+1)
-            # set early stopping and checkpoint parameters
-            es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=10, min_delta=0, restore_best_weights=True)
-            callbacks_list = [es, lr_scheduler]
+            # set learning rate scheduler
+            callbacks_list =  [lr_scheduler]
 
             # set training and eval pairs and split data for training
             train_pairs_2, eval_pairs = crossval_pairs(train_2_pairs_set,eval_pairs_set,i)
@@ -191,7 +183,7 @@ def train_model_multi_cv(model,lr_scheduler,train_pairs,x_all,x_drug,y_series,ep
                                 validation_data=([xo_test_phos, xo_test_prot, xd_test], y_test),
                                 epochs=epochs, 
                                 batch_size=None, 
-                                verbose=0, 
+                                verbose=1,
                                 callbacks=callbacks_list)
             
             # End timer
@@ -243,23 +235,21 @@ def train_model_SMILES(model, lr_scheduler, x_train, x_test, y_train, y_test, ep
     # unpackage x_train and x_test 
     xo_train, xd_train = x_train
     xo_test, xd_test = x_test
-
-    # set early stopping and learning rate scheduler
-    es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=20, min_delta=0, restore_best_weights=True)
-    callbacks_list =  [es,lr_scheduler]
         
     # convert drug dataframes to 3D arrays
     xd_train_vals = prep_xd(xd_train)
     xd_test_vals  = prep_xd(xd_test)
 
+    # set learning rate scheduler
+    callbacks_list =  [lr_scheduler]
+
     # Start timer
     start = time.time() 
     # Train model
     history = model.fit([xo_train, xd_train_vals], y_train,
-                        validation_data=([xo_test, xd_test_vals], y_test),
                         epochs=epochs, 
                         batch_size=None, 
-                        verbose=1, 
+                        verbose=1,
                         callbacks=callbacks_list)
     
     y_pred = model.predict([xo_test, xd_test_vals])  
@@ -300,9 +290,8 @@ def train_model_SMILES_cv(model,lr_scheduler,train_pairs,x_all,x_drug,y_series,e
         # loop for each k-fold
         for i in range(k):
             print('K-fold', i+1)
-            # set early stopping and checkpoint parameters
-            es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=10, min_delta=0, restore_best_weights=True)
-            callbacks_list = [es, lr_scheduler]
+            # set learning rate scheduler
+            callbacks_list =  [lr_scheduler]
 
             # set training and eval pairs and split data for training
             train_pairs_2, eval_pairs = crossval_pairs(train_2_pairs_set,eval_pairs_set,i)
@@ -319,7 +308,7 @@ def train_model_SMILES_cv(model,lr_scheduler,train_pairs,x_all,x_drug,y_series,e
                                 validation_data=([xo_test, xd_test_vals], y_test),
                                 epochs=epochs, 
                                 batch_size=None, 
-                                verbose=1, 
+                                verbose=1,
                                 callbacks=callbacks_list)
             
             # End timer
