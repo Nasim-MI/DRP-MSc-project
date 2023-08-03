@@ -1,4 +1,4 @@
-"""Functions for training and evaluating DRP Tensorflow models"""
+"""Functions for training and evaluating DRP Tensorflow and XGBoost models"""
 
 import numpy as np
 import pandas as pd
