@@ -218,12 +218,12 @@ def train_model_multi_cv(model,lr_scheduler,train_pairs,x_all,x_drug,y_series,ep
 def prep_xd(xd_train):
     """Takes xd_train or xd_test dataframes and returns a 3D array of values"""
     # prepare SMILES data arrays
-    samples = len(xd_train[0].values) # number of samples for zeroed array
+    samples = len(xd_train.iloc[:,0].values) # number of samples for zeroed array
     # convert xd values to a proper 3d array
-    max_len = len(xd_train[0][0])
-    max_char = len(xd_train[0][0][1])
+    max_len = len(xd_train.iloc[:,0][0])
+    max_char = len(xd_train.iloc[:,0][0][1])
     xd_vals = np.zeros(shape=(samples, max_len, max_char))
-    for ind,array in enumerate(xd_train[0].values):
+    for ind,array in enumerate(xd_train.iloc[:,0].values):
         xd_vals[ind] = array
         
     return xd_vals

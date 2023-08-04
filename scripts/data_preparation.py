@@ -346,7 +346,7 @@ def encode_SMILES(SMILES_df):
     smi2index = dict( (c,i) for i,c in enumerate( SMILES_CHARS ) )
     index2smi = dict( (i,c) for i,c in enumerate( SMILES_CHARS ) )
 
-    def smiles_encoder( smiles, maxlen=300 ):
+    def smiles_encoder( smiles, maxlen):
         smiles = Chem.MolToSmiles(Chem.MolFromSmiles( smiles ))
         X = np.zeros( ( maxlen, len( SMILES_CHARS ) ) )
         for i, c in enumerate( smiles ):
@@ -367,7 +367,7 @@ def encode_SMILES(SMILES_df):
     SMILES_df['SMILE_encoded'] = SMILE_list_encoded
 
     # create separate one-hot encoded SMILES dataframe
-    one_hot_SMILES = SMILES_df.drop('SMILES',axis=1).set_index('name')
+    one_hot_SMILES = SMILES_df.drop('SMILES',axis=1)
     one_hot_SMILES = one_hot_SMILES[~one_hot_SMILES.index.duplicated(keep='first')] # remove rows with duplicate indicies
 
     return one_hot_SMILES
@@ -423,7 +423,7 @@ def data_prep_SMILES(drug_df,one_hot_drugs,phospho_df,common_ind):
         drug_cl_index.append(cl +'::'+ drug)
         
     # duplicate rows and add paired index
-    x_drug = pd.DataFrame(np.repeat(one_hot_drugs.values, len(common_ind), axis=0), index=drug_cl_index)
+    x_drug = pd.DataFrame(np.repeat(one_hot_drugs.values, len(common_ind), axis=0), index=drug_cl_index, columns=one_hot_drugs.columns)
 
     ## Drug-Cell Line pairing for phosphoproteomics data (x_all)
 
