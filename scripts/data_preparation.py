@@ -423,7 +423,7 @@ def data_prep_SMILES(drug_df,one_hot_drugs,phospho_df,common_ind):
         drug_cl_index.append(cl +'::'+ drug)
         
     # duplicate rows and add paired index
-    x_drug = pd.DataFrame(np.repeat(one_hot_drugs.values, len(common_ind), axis=0), index=drug_cl_index, columns=one_hot_drugs.columns)
+    x_drug = pd.DataFrame(np.repeat(one_hot_drugs.values, len(common_ind), axis=0), index=drug_cl_index)
 
     ## Drug-Cell Line pairing for phosphoproteomics data (x_all)
 
