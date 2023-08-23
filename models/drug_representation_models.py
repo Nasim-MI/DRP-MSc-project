@@ -5,7 +5,7 @@ from tensorflow.keras import initializers
 # Tensorflow neural network models using one-hot encoded SMILES or molecular fingerprints as drug representation
 
 ## Phosphoproteomics model using one-hot encoded SMILES
-def build_Phos_SMILES_CNN(learning_rate=1e-3, momentum=0.9, seed=42):
+def build_CNN_Phos_SMILES(xo_train,xd_vals,learning_rate=1e-3, momentum=0.9, seed=42):
 
     # set weight initialiser
     initializer = tf.keras.initializers.GlorotUniform(seed)
@@ -67,7 +67,7 @@ def build_Phos_SMILES_CNN(learning_rate=1e-3, momentum=0.9, seed=42):
 
 
 ## Phosphoproteomics model using molecular fingerprints
-def build_model(learning_rate=1e-3, momentum=0.9, seed=42):
+def build_CNN_Phos_FP(xo_train,xd_train,learning_rate=1e-3, momentum=0.9, seed=42):
 
     # set weight initialiser
     initializer = tf.keras.initializers.GlorotUniform(seed)
@@ -94,7 +94,7 @@ def build_model(learning_rate=1e-3, momentum=0.9, seed=42):
     
     
     # one-hot encoded drug data input (default 3 layers)
-    y_input = layers.Input(shape=(xd_test.shape[1],1))
+    y_input = layers.Input(shape=(xd_train.shape[1],1))
 
     # 1st convolution layer
     y = layers.Conv1D(filters=64, kernel_size=11, kernel_initializer=initializer, activation='relu')(y_input) 
